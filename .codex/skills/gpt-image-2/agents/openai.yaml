@@ -1,0 +1,4 @@
+interface:
+  display_name: "GPT Image 2"
+  short_description: "Generate images with gpt-image-2"
+  default_prompt: "Use $gpt-image-2 to generate a polished product image from this prompt."

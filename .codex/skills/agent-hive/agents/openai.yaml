@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Hive"
+  short_description: "Coordinate agents with executable plans"
+  default_prompt: "Use $agent-hive to coordinate this task with subagents, verification gates, and a self-contained .agent-hive/PLAN-PROGRESS file."
