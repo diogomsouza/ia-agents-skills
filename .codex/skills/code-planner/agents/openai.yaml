@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Planner"
+  short_description: "Plan code changes before editing"
+  default_prompt: "Use $code-planner to plan an implementation before editing code."

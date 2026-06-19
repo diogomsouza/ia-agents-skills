@@ -30,11 +30,26 @@ Use these activity types as the default queue:
 5. Spawn verifier agents for completed phase batches.
 6. Collect verifier results and either accept phases or create retry activities.
 7. Run or delegate validation for accepted batches.
-8. Repeat for the next phase.
-9. Perform final residual-risk review.
-10. Final report and mark goal complete.
+8. For multi-step work, attempt a checkpoint commit for accepted, validated, integrated code changes when the repository is versioned and commits are permitted.
+9. Repeat for the next phase.
+10. Perform final residual-risk review.
+11. Final report and mark goal complete.
 
 At the end of each non-final activity, explicitly stop after updating progress. Let the active goal continuation pick up the next activity.
+
+## Checkpoint Commits
+
+For multi-step work, after each checkpointed phase or batch has been executed, verified, and integrated, attempt to commit the completed code before moving to the next phase.
+
+- Attempt checkpoint commits only when the requested work has more than one execution phase, checkpointed batch, or dependent next step.
+- Do not create a checkpoint commit when all requested work is completed in a single accepted batch and the only remaining action is final reporting. Record the checkpoint commit status as `Not Applicable` in the progress file and continue to completion.
+- Only attempt a commit when the affected code is in a versioned repository and the current environment, user instruction, and repository state allow commits.
+- Treat checkpoint commits as best effort. If the repository is not versioned, commit permission is unavailable, Git identity is missing, hooks fail, the worktree contains unresolved unrelated changes, or any other commit attempt fails, record the reason in the progress file and continue the Agent Hive process.
+- Do not block, retry indefinitely, or ask the user only because a checkpoint commit could not be created.
+- Do not include unrelated user changes in a checkpoint commit. Commit only files intentionally changed for the accepted checkpoint, plus directly related generated artifacts when they are part of the agreed deliverable.
+- Use a concise checkpoint commit message that names the completed phase or batch.
+- Record every checkpoint commit attempt in `Checkpoint Commits` with status, commit SHA when available, files or scope, and any skip or failure reason.
+- Make the checkpoint commit after verifier acceptance and required integration validation, before adding or starting the next dependent execution phase.
 
 ## Progress File as Execution Contract
 
@@ -108,7 +123,7 @@ When this skill is explicitly invoked or the user asks for agents, subagents, de
 6. Diagnose orchestration state before delegating. Record inventory, assumptions, risks, initial plan, and completion gates in the progress file. The diagnosis may identify files and tools, but substantive exploration must be delegated to an explorer or specialist agent.
 7. Before any execution worker starts, ensure the progress file contains an `Execution Plan` with all phases, dependencies, validation gates, verifier assignments, and stop conditions. If exploration is required first, create a pending `Synthesize explorer findings into execution plan` activity and complete it after explorers return.
 
-Use this initial file shape:
+Use this initial file shape. In `Source Request and Plan` and `Inventory`, keep each field as a parent bullet and put all values on indented child bullets, even when there is only one value. Do not collapse these fields into single-line `- Field: value` bullets when creating or updating the progress file.
 
 ```markdown
 # Agent Plan Progress: {context-id}
@@ -119,10 +134,15 @@ Generated: {timestamp}
 ## Source Request and Plan
 
 - User request:
+  - `{original user request}`
 - Prior user-approved plan or requested plan:
+  - Pending capture, no prior detailed plan, or `{plan item}`.
 - In-scope systems:
+  - Pending scope confirmation.
 - Out-of-scope systems:
+  - Pending scope confirmation.
 - Success definition:
+  - Pending success definition.
 
 ## Diagnostic of Current State
 
@@ -131,13 +151,21 @@ Generated: {timestamp}
 ## Inventory
 
 - Systems and tools:
+  - Pending inventory.
 - Available agents or specialists:
+  - Pending discovery.
 - Delegation tools:
+  - Pending discovery.
 - Execution mode:
+  - Agent Hive coordinator delegates execution and verification.
 - Parallelism plan:
+  - Pending batching plan.
 - Time budget:
+  - Pending estimate.
 - Assumptions:
+  - Pending assumption review.
 - Artifacts:
+  - Progress file: `.agent-hive/PLAN-PROGRESS-{context-id}.md`.
 
 ## Identified Risks
 
@@ -163,8 +191,9 @@ Generated: {timestamp}
 4. Integrate explorer results into `Explorer Findings` and update `Execution Plan`.
 5. Execute the next checkpointed batch from `Activity Queue`.
 6. Update this progress file.
-7. Stop the current activity unless final completion gates are met.
-8. On continuation, reread this file and choose the next pending activity.
+7. For multi-step work, attempt a checkpoint commit after a completed batch is accepted, validated, and integrated, when commits are possible.
+8. Stop the current activity unless final completion gates are met.
+9. On continuation, reread this file and choose the next pending activity.
 
 ## Completion Gates
 
@@ -181,6 +210,7 @@ Generated: {timestamp}
 - [ ] Every `Execution Plan` phase is `Done`, `Accepted`, or `Not Applicable`.
 - [ ] No `Activity Queue` item remains `Pending`, `In Progress`, `Retry Required`, or unresolved `Blocked`.
 - [ ] Required validation has passed or validation gaps are documented.
+- [ ] Required multi-step checkpoint commits were created for accepted code batches, or `Not Applicable`/skipped attempts are documented.
 - [ ] Residual risks are documented.
 - [ ] Final accounting is recorded before final response.
 
@@ -197,6 +227,12 @@ Generated: {timestamp}
 | {timestamp} | Initialization | Agent Hive | Progress file created. | Not applicable. |
 | TBD | Delegation discovery | Agent Hive | Subagent tooling and specialists identified. | Not applicable. |
 
+## Checkpoint Commits
+
+| Time | Phase or Batch | Status | Commit | Scope | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Pending | TBD | Pending | TBD | TBD | Attempt only for multi-step work after accepted, validated, integrated code changes; mark `Not Applicable` for single-batch completion. |
+
 ## Activity Queue
 
 | Status | Activity | Owner | Stop Condition |
@@ -210,6 +246,7 @@ Generated: {timestamp}
 | Pending | Collect first execution batch. | Agent Hive | Results recorded in Progress. |
 | Pending | Spawn verifier batch. | verifier subagents | Verifiers spawned or assigned for completed batch. |
 | Pending | Collect verifier batch. | Agent Hive | Phases accepted or retry activities added. |
+| Pending | Decide or attempt checkpoint commit for accepted code batch. | Agent Hive | Commit created for multi-step work, or `Not Applicable`/skip/failure reason recorded in `Checkpoint Commits`. |
 
 ## Runtime Notes
 
@@ -268,7 +305,8 @@ For every phase or subtask, advance through one checkpointed batch per Codex act
 1. **Execute activity**: Do the next pending batch from `Activity Queue`.
 2. **Record**: Append the result, artifacts, commands, and open questions to the progress file.
 3. **Plan update**: If the result is exploration, verification feedback, or a scope change, update `Explorer Findings`, `Execution Plan`, and `Activity Queue`, not only `Progress`.
-4. **Stop or finish**: If completion gates are not fully met, end the current activity. If they are met, produce final report and mark the goal complete.
+4. **Checkpoint commit**: For multi-step work, after accepted, validated, integrated code changes, create a best-effort commit when possible. For single-batch completion, record `Not Applicable`; otherwise record why it was skipped or failed.
+5. **Stop or finish**: If completion gates are not fully met, end the current activity. If they are met, produce final report and mark the goal complete.
 
 For a full phase, the required state transitions are:
 
@@ -277,7 +315,9 @@ For a full phase, the required state transitions are:
 3. **Verify**: Spawn or assign verification to separate verifier subagents. Verify coherent batches when risk allows.
 4. **Gate**: Collect the verifier answer to: "Is this result correct enough to support the decisions or steps that depend on it next?"
 5. **Retry if needed**: If the answer is no, add a retry execution activity with the verifier's specific correction guidance. Do not proceed past the gate.
-6. **Advance**: If the answer is yes, update `Execution Plan.Status`, update completion gates when applicable, and add the next phase activity.
+6. **Integrate and validate**: Run or delegate the required integration validation for the accepted phase or batch.
+7. **Commit checkpoint**: If the answer is yes and validation passes or documented validation gaps are accepted, attempt the checkpoint commit before adding or starting the next dependent phase only when there is more than one execution phase, checkpointed batch, or dependent next step. If this accepted batch completes the entire request in one step, record the checkpoint commit as `Not Applicable` and proceed to final reporting.
+8. **Advance**: Update `Execution Plan.Status`, update completion gates when applicable, and add the next phase activity.
 
 Use pragmatic verification for reports, investigations, prototypes, and decision-support work. Use stricter verification for production code, security, compliance, migrations, data integrity, or user-impacting behavior; require relevant tests, builds, lint, review checks, or reproducible validation.
 
@@ -297,6 +337,7 @@ Keep the progress file current. It must include:
 - Architectural decisions
 - Activity queue with all known required activities, not just the immediate next step
 - Progress log
+- Checkpoint commit attempts, including successful commit SHAs, `Not Applicable` single-batch decisions, or skip/failure reasons
 - Residual risks
 
 Update the file after every meaningful phase, verification result, decision, or scope change. Treat it as the durable state that lets the work resume without relying on chat memory.
