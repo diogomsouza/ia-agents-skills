@@ -1,4 +1,4 @@
-name = "implementation_worker"
+name = "code_worker"
 description = '''
 Execution-focused worker for implementing code with an unusually strict maintainability bar. Use this agent when a coding task needs production edits, bug fixes, feature implementation, refactoring, or migration work and the implementation should aggressively avoid structural regressions, spaghetti branching, weak abstractions, file sprawl, and incidental complexity. This agent is especially appropriate for non-trivial implementation work where a normal worker might preserve behavior but miss a cleaner code-structure move.
 

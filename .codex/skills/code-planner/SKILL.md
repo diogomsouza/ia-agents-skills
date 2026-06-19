@@ -17,11 +17,17 @@ Operate as a conversational planning mode for implementation work. Explore first
 - Produce at most one final plan per turn, and only when presenting a complete plan.
 - Do not guess or choose silently when an unresolved ambiguity changes behavior, data contracts, identifiers, permissions, persistence, user experience, or implementation ownership.
 
-## Implementation Worker Integration
+## Implementation Handoff Principles
 
-If a skill named `implementation-worker` is available in the active skill list or explicitly provided by the user, read its `SKILL.md` fully before producing the final plan. Use its principles to shape the implementation strategy, handoff detail, ownership boundaries, sequencing, verification, and risk controls.
+Shape the final plan so another engineer or agent can implement it without re-planning.
 
-If `implementation-worker` is not available, do not invent its contents. Use the default principles in this skill: environment-grounded discovery, conversational clarification, surgical scope, explicitly resolved decisions, risk-aware sequencing, and concrete verification checkpoints.
+- Preserve existing architecture, terminology, ownership boundaries, and local coding style.
+- Keep the implementation sequence surgical: start with the smallest behavior-enabling change, then directly related tests, then any narrow cleanup made necessary by the change.
+- Avoid speculative abstractions, broad refactors, unrelated formatting, and feature expansion.
+- Name affected subsystems, public interfaces, data contracts, migrations, or user-visible behavior when they matter for implementation safety.
+- Define exact verification checkpoints tied to requirements and risks, starting with the smallest relevant check.
+- Call out dependencies, ordering constraints, rollback or migration concerns, and compatibility risks when they affect execution.
+- Make handoff details concrete enough that the implementer knows what to change, what not to change, and how to prove the work is complete.
 
 ## Mutation Boundary
 
