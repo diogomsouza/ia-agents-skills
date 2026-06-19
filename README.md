@@ -44,7 +44,7 @@ Colecao de agents e skills para uso com Codex. O projeto organiza instrucoes reu
 
 ## Fluxo Operacional Recomendado
 
-Use as tres skills em sequencia quando o trabalho tem risco de decisao, dominio ou implementacao:
+Use as skills quando o trabalho tem risco de decisao, dominio ou implementacao:
 
 ```text
 grill-code -> code-planner -> agent-hive
@@ -85,7 +85,7 @@ Quando nao usar:
 
 ## grill-code
 
-Use quando o problema precisa ser questionado antes de virar plano ou codigo.
+Use quando o problema precisa ser questionado antes de virar codigo.
 
 Casos ideais:
 
@@ -146,8 +146,6 @@ Uso dos agents:
 - `code-reviewer`: verificacao padrao para mudancas pequenas ou medias, com foco em guidelines, bugs obvios e manutencao comum.
 - `code-reviewer-max`: verificacao avancada para arquitetura, complexidade, branching, abstracoes, contratos e manutenibilidade.
 - `code-reviewer-security`: verificacao focada em seguranca, autorizacao, privacidade, integridade de dados, feature gates e regressoes criticas.
-
-Regra importante: no `agent-hive`, executor e verificador devem ser agents diferentes. O `code-worker` nao deve revisar a propria fase.
 
 ## Escolha Rapida
 
